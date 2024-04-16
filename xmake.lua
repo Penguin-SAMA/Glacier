@@ -1,11 +1,34 @@
-add_rules("mode.debug", "mode.release")
-add_requires("boost", "yaml-cpp", "openssl", "abseil", "doxygen")
+-- 设置项目名称
+set_project("Glacier")
 
+-- 设置编译选项
+add_cxflags(
+	"-rdynamic",
+	"-O0",
+	"-ggdb",
+	"-Wall",
+	"-Wno-deprecated",
+	"-Werror",
+	"-Wno-unused-function",
+	{ force = true }
+)
+
+-- 设置 C++ 标准
+set_languages("c++11")
+
+-- 定义 Glacier 作为共享库
 target("Glacier")
+set_kind("shared")
+add_files("Glacier/log.cpp") -- 添加库源文件
+set_targetdir("$(projectdir)/lib") -- 设置库文件的输出目录
+
+-- 定义测试可执行文件
+target("test")
 set_kind("binary")
-set_toolchains("gcc")
-add_files("Glacier/*.cpp")
-add_packages("boost", "yaml-cpp", "openssl", "abseil", "doxygen")
+add_deps("Glacier") -- 添加依赖，确保 Glacier 先编译
+add_files("tests/test.cpp") -- 添加测试源文件
+add_links("Glacier") -- 链接 Glacier 库
+set_targetdir("$(projectdir)/bin") -- 设置生成的可执行文件目录
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
