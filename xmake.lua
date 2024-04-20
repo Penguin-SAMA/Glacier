@@ -19,7 +19,7 @@ set_languages("c++11")
 -- 定义 Glacier 作为共享库
 target("Glacier")
 set_kind("shared")
-add_files("Glacier/log.cpp") -- 添加库源文件
+add_files("Glacier/log.cpp", "Glacier/util.cpp") -- 添加库源文件
 set_targetdir("$(projectdir)/lib") -- 设置库文件的输出目录
 
 -- 定义测试可执行文件

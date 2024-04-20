@@ -1,16 +1,14 @@
+
 #include "../Glacier/log.h"
-#include <iostream>
+#include "../Glacier/util.h"
+
+// 定义一个日志器(这里使用的是root)
+static Glacier::Logger::ptr g_logger = GLACIER_LOG_ROOT();
 
 int main(int argc, char** argv) {
-    Glacier::Logger::ptr logger(new Glacier::Logger);
-    logger->addAppender(Glacier::LogAppender::ptr(new Glacier::StdoutLogAppender));
-
-    Glacier::LogEvent::ptr event(new Glacier::LogEvent(__FILE__, __LINE__, 0, 1, 2, time(0)));
-    event->getSS() << "hello sylar log";
-
-    logger->log(Glacier::LogLevel::DEBUG, event);
-
-    std::cout << "Hello Glacier log" << std::endl;
-
+    // 使用流式风格写日志
+    GLACIER_LOG_DEBUG(g_logger) << "hello logger stream";
+    // 使用格式化写日志
+    GLACIER_LOG_FMT_INFO(g_logger, "%s", "hello logger format");
     return 0;
 }
