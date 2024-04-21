@@ -13,22 +13,44 @@ add_cxflags(
 	{ force = true }
 )
 
+add_requires("boost", "yaml-cpp")
+
 -- 设置 C++ 标准
 set_languages("c++11")
 
 -- 定义 Glacier 作为共享库
 target("Glacier")
 set_kind("shared")
-add_files("Glacier/log.cpp", "Glacier/util.cpp") -- 添加库源文件
+add_files("Glacier/*.cpp") -- 添加库源文件
+add_includedirs("$(projectdir)")
 set_targetdir("$(projectdir)/lib") -- 设置库文件的输出目录
+add_packages("boost", "yaml-cpp")
 
 -- 定义测试可执行文件
 target("test")
 set_kind("binary")
 add_deps("Glacier") -- 添加依赖，确保 Glacier 先编译
 add_files("tests/test.cpp") -- 添加测试源文件
+add_includedirs("$(projectdir)")
 add_links("Glacier") -- 链接 Glacier 库
 set_targetdir("$(projectdir)/bin") -- 设置生成的可执行文件目录
+
+target("test_config")
+set_kind("binary")
+add_deps("Glacier") -- 添加依赖，确保 Glacier 先编译
+add_files("tests/test_config.cpp") -- 添加测试源文件
+add_includedirs("$(projectdir)")
+add_links("Glacier") -- 链接 Glacier 库
+set_targetdir("$(projectdir)/bin") -- 设置生成的可执行文件目录
+
+target("test_yaml")
+set_kind("binary")
+add_deps("Glacier") -- 添加依赖，确保 Glacier 先编译
+add_files("tests/test_yaml.cpp") -- 添加测试源文件
+add_includedirs("$(projectdir)")
+add_links("Glacier") -- 链接 Glacier 库
+set_targetdir("$(projectdir)/bin") -- 设置生成的可执行文件目录
+add_packages("boost", "yaml-cpp")
 
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
