@@ -36,6 +36,8 @@ public:
     virtual std::string toString() = 0;
     virtual bool fromString(const std::string& val) = 0;
 
+    virtual std::string getTypeName() const = 0;
+
 protected:
     std::string m_name;
     std::string m_description;
@@ -270,13 +272,15 @@ public:
             // m_val = boost::lexical_cast<T>(val);
             setValue(FromStr()(val));
         } catch (std::exception& e) {
-            GLACIER_LOG_ERROR(GLACIER_LOG_ROOT()) << "ConfigVar::fromString exception" << e.what() << " convert: " << typeid(val).name() << " to " << typeid(m_val).name();
+            GLACIER_LOG_ERROR(GLACIER_LOG_ROOT()) << "ConfigVar::fromString exception" << e.what() << " convert: " << typeid(val).name() << " to " << typeid(m_val).name() << " - " << val;
         }
         return false;
     }
 
     const T getValue() const { return m_val; }
     void setValue(const T& val) { m_val = val; }
+
+    std::string getTypeName() const override { return typeid(T).name(); }
 
 private:
     T m_val;
@@ -289,10 +293,16 @@ public:
 
     template <class T>
     static typename ConfigVar<T>::ptr Lookup(const std::string& name, const T& default_value, const std::string& description = "") {
-        auto tmp = Lookup<T>(name);
-        if (tmp) {
-            GLACIER_LOG_INFO(GLACIER_LOG_ROOT()) << "Lookup name: " << name << " exists";
-            return tmp;
+        auto it = s_datas.find(name);
+        if (it != s_datas.end()) {
+            auto tmp = std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
+            if (tmp) {
+                GLACIER_LOG_INFO(GLACIER_LOG_ROOT()) << "Lookup name: " << name << " exists";
+                return tmp;
+            } else {
+                GLACIER_LOG_ERROR(GLACIER_LOG_ROOT()) << "Lookup name: " << name << " exists but type not " << typeid(T).name() << " real_type: " << it->second->getTypeName() << " " << it->second->toString();
+                return nullptr;
+            }
         }
 
         if (name.find_first_not_of("abcdefghijklmnopqrstuvwxyz._0123456789") != std::string::npos) {
