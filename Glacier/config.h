@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <cctype>
 #include <exception>
+#include <functional>
 #include <list>
 #include <map>
 #include <memory>
@@ -252,6 +253,7 @@ class ConfigVar : public ConfigVarBase
 {
 public:
     using ptr = std::shared_ptr<ConfigVar>;
+    using on_change_cb = std::function<void(const T& old_value, const T& new_value)>;
 
     ConfigVar(const std::string& name, const T& default_value, const std::string& description)
         : ConfigVarBase(name, description)
@@ -278,12 +280,38 @@ public:
     }
 
     const T getValue() const { return m_val; }
-    void setValue(const T& val) { m_val = val; }
+
+    void setValue(const T& val) {
+        if (val == m_val) {
+            return;
+        }
+        for (auto& i : m_cbs) {
+            i.second(m_val, val);
+        }
+        m_val = val;
+    }
 
     std::string getTypeName() const override { return typeid(T).name(); }
 
+    void addListener(uint64_t key, on_change_cb cb) {
+        m_cbs[key] = cb;
+    }
+
+    void delListener(uint64_t key) {
+        m_cbs.erase(key);
+    }
+
+    on_change_cb getListener(uint64_t key) {
+        auto it = m_cbs.find(key);
+        return it == m_cbs.end() ? nullptr : it->second;
+    }
+
+    void clearListener() { m_cbs.clear(); }
+
 private:
     T m_val;
+    // 变更回调函数组
+    std::map<uint64_t, on_change_cb> m_cbs;
 };
 
 class Config
