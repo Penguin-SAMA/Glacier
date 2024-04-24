@@ -42,7 +42,7 @@ void print_yaml(const YAML::Node& node, int level) {
 }
 
 void test_yaml() {
-    YAML::Node root = YAML::LoadFile("/home/penguin/code/Glacier/bin/conf/log.yml");
+    YAML::Node root = YAML::LoadFile("/home/penguin/code/Glacier/bin/conf/test.yml");
 
     print_yaml(root, 0);
 
@@ -78,7 +78,7 @@ void test_config() {
     XX_M(g_str_int_map_value_config, str_int_map, before);
     XX_M(g_str_int_umap_value_config, str_int_umap, before);
 
-    YAML::Node root = YAML::LoadFile("/home/penguin/code/Glacier/bin/conf/log.yml");
+    YAML::Node root = YAML::LoadFile("/home/penguin/code/Glacier/bin/conf/test.yml");
     Glacier::Config::LoadFromYaml(root);
 
     GLACIER_LOG_INFO(GLACIER_LOG_ROOT()) << "after: " << g_int_value_config->getValue();
@@ -168,12 +168,28 @@ void test_class() {
     XX_PM(g_person_map, "class.map before");
     GLACIER_LOG_INFO(GLACIER_LOG_ROOT()) << "before: " << g_person_vec_map->toString();
 
-    YAML::Node root = YAML::LoadFile("/home/penguin/code/Glacier/bin/conf/log.yml");
+    YAML::Node root = YAML::LoadFile("/home/penguin/code/Glacier/bin/conf/test.yml");
     Glacier::Config::LoadFromYaml(root);
 
     GLACIER_LOG_INFO(GLACIER_LOG_ROOT()) << "after: " << g_person->getValue().toString() << " - " << g_person->toString();
     XX_PM(g_person_map, "class.map after");
     GLACIER_LOG_INFO(GLACIER_LOG_ROOT()) << "after: " << g_person_vec_map->toString();
+}
+
+void test_log() {
+    static Glacier::Logger::ptr system_log = GLACIER_LOG_NAME("system");
+    GLACIER_LOG_INFO(system_log) << "hello system";
+    std::cout << Glacier::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    YAML::Node root = YAML::LoadFile("/home/penguin/code/Glacier/bin/conf/log.yml");
+    Glacier::Config::LoadFromYaml(root);
+    std::cout << "========================" << std::endl;
+    std::cout << Glacier::LoggerMgr::GetInstance()->toYamlString() << std::endl;
+    // std::cout << "========================" << std::endl;
+    // std::cout << root << std::endl;
+    GLACIER_LOG_INFO(system_log) << "hello system" << std::endl;
+
+    system_log->setFormatter("%d - %m%n");
+    GLACIER_LOG_INFO(system_log) << "hello system" << std::endl;
 }
 
 int main(int argc, char** argv) {
@@ -182,7 +198,8 @@ int main(int argc, char** argv) {
 
     // test_yaml();
     // test_config();
-    test_class();
+    // test_class();
+    test_log();
 
     return 0;
 }
