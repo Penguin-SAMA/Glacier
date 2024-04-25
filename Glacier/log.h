@@ -1,6 +1,7 @@
 #pragma once
 
 #include "singleton.h"
+#include "thread.h"
 #include "util.h"
 #include <cstdarg>
 #include <cstdint>
@@ -147,6 +148,7 @@ class LogAppender
 
 public:
     using ptr = std::shared_ptr<LogAppender>;
+    using MutexType = Spinlock;
 
     virtual ~LogAppender() {}
 
@@ -161,6 +163,7 @@ public:
 protected:
     LogLevel::Level m_level = LogLevel::DEBUG;
     bool m_hasFormatter = false;
+    MutexType m_mutex;
     LogFormatter::ptr m_formatter;
 };
 
@@ -170,6 +173,7 @@ class Logger : public std::enable_shared_from_this<Logger>
 
 public:
     using ptr = std::shared_ptr<Logger>;
+    using MutexType = Spinlock;
 
     Logger(const std::string& name = "root");
 
@@ -196,6 +200,7 @@ public:
 private:
     std::string m_name;
     LogLevel::Level m_level;
+    MutexType m_mutex;
     LogFormatter::ptr m_formatter;
     std::list<LogAppender::ptr> m_appenders;
     Logger::ptr m_root;
@@ -229,6 +234,8 @@ private:
 class LoggerManager
 {
 public:
+    using MutexType = Spinlock;
+
     LoggerManager();
 
     Logger::ptr getLogger(const std::string& name);
@@ -239,6 +246,7 @@ public:
     std::string toYamlString();
 
 private:
+    MutexType m_mutex;
     std::map<std::string, Logger::ptr> m_loggers;
     Logger::ptr m_root;
 };
