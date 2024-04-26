@@ -118,7 +118,7 @@ class NameFormatItem : public LogFormatter::FormatItem
 public:
     NameFormatItem(const std::string& str = "") {}
     void format(std::ostream& os, std::shared_ptr<Logger> logger, LogLevel::Level level, LogEvent::ptr event) override {
-        os << logger->getName();
+        os << event->getLogger()->getName();
     }
 };
 
@@ -239,7 +239,7 @@ Logger::Logger(const std::string& name)
     , m_level(LogLevel::DEBUG) {
     // [TODO] 这里格式化似乎有问题
     // 如果行号是一位数，最后的端口号就对不齐
-    m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
+    m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
 }
 
 std::string Logger::toYamlString() {
@@ -511,18 +511,18 @@ void LogFormatter::init() {
         #str, [](const std::string& fmt) { return LogFormatter::FormatItem::ptr(new C(fmt)); } \
     }
 
-        XX(m, MessageFormatItem),
-        XX(p, LevelFormatItem),
-        XX(r, ElapseFormatItem),
-        XX(c, NameFormatItem),
-        XX(t, ThreadIdFormatItem),
-        XX(T, TabFormatItem),
-        XX(F, FiberIdFormatItem),
-        XX(N, ThreadNameFormatItem),
-        XX(d, DateTimeFormatItem),
-        XX(f, FilenameFormatItem),
-        XX(l, LineFormatItem),
-        XX(n, NewLineFormatItem),
+        XX(m, MessageFormatItem),    // 消息 -- m
+        XX(p, LevelFormatItem),      // 日志级别 -- p
+        XX(r, ElapseFormatItem),     // 程序运行时间 -- r
+        XX(c, NameFormatItem),       // 日志名称 -- c
+        XX(t, ThreadIdFormatItem),   // 线程id -- t
+        XX(T, TabFormatItem),        // Tab -- T
+        XX(F, FiberIdFormatItem),    // 协程id -- F
+        XX(N, ThreadNameFormatItem), // 线程名称 -- N
+        XX(d, DateTimeFormatItem),   // 时间 -- d
+        XX(f, FilenameFormatItem),   // 文件名 -- f
+        XX(l, LineFormatItem),       // 行号 -- l
+        XX(n, NewLineFormatItem),    // 换行 -- n
 #undef XX
     };
 

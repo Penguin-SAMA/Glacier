@@ -61,6 +61,24 @@ add_links("Glacier") -- 链接 Glacier 库
 set_targetdir("$(projectdir)/bin") -- 设置生成的可执行文件目录
 add_packages("boost", "yaml-cpp")
 
+target("test_util")
+set_kind("binary")
+add_deps("Glacier") -- 添加依赖，确保 Glacier 先编译
+add_files("tests/test_util.cpp") -- 添加测试源文件
+add_includedirs("$(projectdir)")
+add_links("Glacier") -- 链接 Glacier 库
+set_targetdir("$(projectdir)/bin") -- 设置生成的可执行文件目录
+add_packages("boost", "yaml-cpp")
+
+target("test_fiber")
+set_kind("binary")
+add_deps("Glacier") -- 添加依赖，确保 Glacier 先编译
+add_files("tests/test_fiber.cpp") -- 添加测试源文件
+add_includedirs("$(projectdir)")
+add_links("Glacier") -- 链接 Glacier 库
+set_targetdir("$(projectdir)/bin") -- 设置生成的可执行文件目录
+add_packages("boost", "yaml-cpp")
+
 --
 -- If you want to known more usage about xmake, please see https://xmake.io
 --

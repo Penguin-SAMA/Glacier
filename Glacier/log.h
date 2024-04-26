@@ -16,7 +16,7 @@
 
 #define GLACIER_LOG_LEVEL(logger, level) \
     if (logger->getLevel() <= level)     \
-    Glacier::LogEventWrap(Glacier::LogEvent::ptr(new Glacier::LogEvent(logger, level, __FILE__, __LINE__, 0, Glacier::GetThreadId(), Glacier::GetFiberId(), time(0), ""))).getSS()
+    Glacier::LogEventWrap(Glacier::LogEvent::ptr(new Glacier::LogEvent(logger, level, __FILE__, __LINE__, 0, Glacier::GetThreadId(), Glacier::GetFiberId(), time(0), Glacier::Thread::GetName()))).getSS()
 
 #define GLACIER_LOG_DEBUG(logger) GLACIER_LOG_LEVEL(logger, Glacier::LogLevel::DEBUG)
 #define GLACIER_LOG_INFO(logger) GLACIER_LOG_LEVEL(logger, Glacier::LogLevel::INFO)
@@ -26,7 +26,7 @@
 
 #define GLACIER_LOG_FMT_LEVEL(logger, level, fmt, ...) \
     if (logger->getLevel() <= level)                   \
-    Glacier::LogEventWrap(Glacier::LogEvent::ptr(new Glacier::LogEvent(logger, level, __FILE__, __LINE__, 0, Glacier::GetThreadId(), Glacier::GetFiberId(), time(0), ""))).getEvent()->format(fmt, __VA_ARGS__)
+    Glacier::LogEventWrap(Glacier::LogEvent::ptr(new Glacier::LogEvent(logger, level, __FILE__, __LINE__, 0, Glacier::GetThreadId(), Glacier::GetFiberId(), time(0), Glacier::Thread::GetName()))).getEvent()->format(fmt, __VA_ARGS__)
 
 #define GLACIER_LOG_FMT_DEBUG(logger, fmt, ...) GLACIER_LOG_FMT_LEVEL(logger, Glacier::LogLevel::DEBUG, fmt, __VA_ARGS__)
 #define GLACIER_LOG_FMT_INFO(logger, fmt, ...) GLACIER_LOG_FMT_LEVEL(logger, Glacier::LogLevel::INFO, fmt, __VA_ARGS__)
