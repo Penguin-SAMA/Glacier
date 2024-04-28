@@ -2,6 +2,7 @@
 #include "config.h"
 #include "log.h"
 #include "macro.h"
+#include "scheduler.h"
 #include <atomic>
 
 namespace Glacier {
@@ -51,7 +52,7 @@ Fiber::Fiber() {
     GLACIER_LOG_DEBUG(g_logger) << "Fiber::Fiber";
 }
 
-Fiber::Fiber(std::function<void()> cb, size_t stackSize)
+Fiber::Fiber(std::function<void()> cb, size_t stackSize, bool use_caller)
     : m_id(++s_fiber_id)
     , m_cb(cb) {
     ++s_fiber_count;
@@ -66,7 +67,11 @@ Fiber::Fiber(std::function<void()> cb, size_t stackSize)
     m_ctx.uc_stack.ss_sp = m_stack;
     m_ctx.uc_stack.ss_size = m_stackSize;
 
-    makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    if (!use_caller) {
+        makecontext(&m_ctx, &Fiber::MainFunc, 0);
+    } else {
+        makecontext(&m_ctx, &Fiber::CallerMainFunc, 0);
+    }
 
     GLACIER_LOG_DEBUG(g_logger) << "Fiber::Fiber id=" << m_id;
 }
@@ -107,22 +112,37 @@ void Fiber::reset(std::function<void()> cb) {
     m_state = INIT;
 }
 
+void Fiber::call() {
+    SetThis(this);
+    m_state = EXEC;
+    if (swapcontext(&t_threadFiber->m_ctx, &m_ctx)) {
+        GLACIER_ASSERT2(false, "swapcontext");
+    }
+}
+
+void Fiber::back() {
+    SetThis(t_threadFiber.get());
+    if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
+        GLACIER_ASSERT2(false, "swapcontext");
+    }
+}
+
 // 切换到当前协程执行
 void Fiber::swapIn() {
     SetThis(this);
     GLACIER_ASSERT(m_state != EXEC);
     m_state = EXEC;
 
-    if (swapcontext(&t_threadFiber->m_ctx, &m_ctx) == -1) {
+    if (swapcontext(&Scheduler::GetMainFiber()->m_ctx, &m_ctx)) {
         GLACIER_ASSERT2(false, "swapcontext");
     }
 }
 
 // 切换到后台执行
 void Fiber::swapOut() {
-    SetThis(t_threadFiber.get());
+    SetThis(Scheduler::GetMainFiber());
 
-    if (swapcontext(&m_ctx, &t_threadFiber->m_ctx) == -1) {
+    if (swapcontext(&m_ctx, &Scheduler::GetMainFiber()->m_ctx)) {
         GLACIER_ASSERT2(false, "swapcontext");
     }
 }
@@ -174,17 +194,50 @@ void Fiber::MainFunc() {
         cur->m_state = TERM;
     } catch (std::exception& e) {
         cur->m_state = EXCEPT;
-        GLACIER_LOG_ERROR(g_logger) << "Fiber Except: " << e.what() << std::endl;
+        GLACIER_LOG_ERROR(g_logger) << "Fiber Except: " << e.what()
+                                    << " fiber_id=" << cur->getId()
+                                    << std::endl
+                                    << Glacier::BacktraceToString();
+
     } catch (...) {
         cur->m_state = EXCEPT;
-        GLACIER_LOG_ERROR(g_logger) << "Fiber Except: " << std::endl;
+        GLACIER_LOG_ERROR(g_logger) << "Fiber Except"
+                                    << " fiber_id=" << cur->getId()
+                                    << std::endl
+                                    << Glacier::BacktraceToString();
     }
 
     auto raw_ptr = cur.get();
     cur.reset();
     raw_ptr->swapOut();
 
-    GLACIER_ASSERT2(false, "never reach");
+    GLACIER_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
+}
+
+void Fiber::CallerMainFunc() {
+    Fiber::ptr cur = GetThis();
+    GLACIER_ASSERT(cur);
+    try {
+        cur->m_cb();
+        cur->m_cb = nullptr;
+        cur->m_state = TERM;
+    } catch (std::exception& e) {
+        cur->m_state = EXCEPT;
+        GLACIER_LOG_ERROR(g_logger) << "Fiber Except: " << e.what()
+                                    << " fiber_id=" << cur->getId()
+                                    << std::endl
+                                    << Glacier::BacktraceToString();
+    } catch (...) {
+        cur->m_state = EXCEPT;
+        GLACIER_LOG_ERROR(g_logger) << "Fiber Except"
+                                    << " fiber_id=" << cur->getId()
+                                    << std::endl
+                                    << Glacier::BacktraceToString();
+    }
+    auto raw_ptr = cur.get();
+    cur.reset();
+    raw_ptr->back();
+    GLACIER_ASSERT2(false, "never reach fiber_id=" + std::to_string(raw_ptr->getId()));
 }
 
 } // namespace Glacier
