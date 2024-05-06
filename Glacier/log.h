@@ -98,6 +98,7 @@ private:
     LogLevel::Level m_level;          // 日志等级
 };
 
+// 日志事件包装器
 class LogEventWrap
 {
 public:

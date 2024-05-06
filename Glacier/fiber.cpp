@@ -17,6 +17,7 @@ static thread_local Fiber::ptr t_threadFiber = nullptr;
 
 static ConfigVar<uint32_t>::ptr g_fiber_stack_size = Glacier::Config::Lookup<uint32_t>("fiber.stack_size", 1024 * 1024, "fiber stack size");
 
+// 创建协程栈
 class MallocStackAllocator
 {
 public:
@@ -112,6 +113,7 @@ void Fiber::reset(std::function<void()> cb) {
     m_state = INIT;
 }
 
+// 从协程主协程切换到当前协程执行
 void Fiber::call() {
     SetThis(this);
     m_state = EXEC;
@@ -120,6 +122,7 @@ void Fiber::call() {
     }
 }
 
+// 从当前协程切换到主协程
 void Fiber::back() {
     SetThis(t_threadFiber.get());
     if (swapcontext(&m_ctx, &t_threadFiber->m_ctx)) {
@@ -127,7 +130,7 @@ void Fiber::back() {
     }
 }
 
-// 切换到当前协程执行
+// 从调度器的主协程切换到当前协程执行
 void Fiber::swapIn() {
     SetThis(this);
     GLACIER_ASSERT(m_state != EXEC);
@@ -138,7 +141,7 @@ void Fiber::swapIn() {
     }
 }
 
-// 切换到后台执行
+// 从当前协程切换到调度器的主协程
 void Fiber::swapOut() {
     SetThis(Scheduler::GetMainFiber());
 
@@ -152,7 +155,7 @@ void Fiber::SetThis(Fiber* f) {
     t_fiber = f;
 }
 
-// 返回当前协程
+// 返回当前协程并获得主协程
 Fiber::ptr Fiber::GetThis() {
     if (t_fiber) {
         return t_fiber->shared_from_this();
@@ -185,6 +188,7 @@ uint64_t Fiber::TotalFibers() {
     return s_fiber_count;
 }
 
+// 协程执行函数
 void Fiber::MainFunc() {
     Fiber::ptr cur = GetThis();
     GLACIER_ASSERT(cur);

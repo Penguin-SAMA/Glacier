@@ -14,6 +14,7 @@ class Fiber : public std::enable_shared_from_this<Fiber>
 public:
     using ptr = std::shared_ptr<Fiber>;
 
+    // 协程的状态
     enum State {
         INIT,
         HOLD,
@@ -61,13 +62,13 @@ public:
     static uint64_t GetFiberId();
 
 private:
-    uint64_t m_id = 0;
-    uint64_t m_stackSize = 0;
-    State m_state = INIT;
-    ucontext_t m_ctx;
-    void* m_stack = nullptr;
+    uint64_t m_id = 0;        // 协程ID
+    uint64_t m_stackSize = 0; // 协程栈大小
+    State m_state = INIT;     // 协程状态
+    ucontext_t m_ctx;         // 协程上下文
+    void* m_stack = nullptr;  // 协程栈指针
 
-    std::function<void()> m_cb;
+    std::function<void()> m_cb; // 协程执行函数
 };
 
 } // namespace Glacier

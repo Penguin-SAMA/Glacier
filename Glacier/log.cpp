@@ -237,8 +237,7 @@ LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level, const 
 Logger::Logger(const std::string& name)
     : m_name(name)
     , m_level(LogLevel::DEBUG) {
-    // [TODO] 这里格式化似乎有问题
-    // 如果行号是一位数，最后的端口号就对不齐
+    // Year-Month-Day Hout:Minute:Second threadId threadName fiberId [Level] [logName] FILE:LINE message
     m_formatter.reset(new LogFormatter("%d{%Y-%m-%d %H:%M:%S}%T%t%T%N%T%F%T[%p]%T[%c]%T%f:%l%T%m%n"));
 }
 
